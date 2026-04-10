@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+        body {
+            background-repeat: no-repeat;
+            background-size: 100%;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        td {
+            border: 1px solid black;
+        }
+    </style>
+
+    <title>Log in</title>
+
+</head>
+
+<body>
+
+    <div id="myPatient">
+
+    </div>
+
+    <h1>View all Doctors</h1>
+
+    <button type="button" onclick="getDoctorNames()">ViewAllDoctors</button>
+    <div id="ViewAllDoctors"></div>
+
+    <br>
+    <h1>Filter doctors by speciality/availability on a certain date</h1>
+    <input type="date" name="date" id="dateFilter">
+    <input type="time" name="time" value="00:00" id="timeFilter">
+    <input type="text" name="speciality" id="specialityFilter"placeholder="doc speciality">
+   
+    <br>
+       
+        <option value=""></option>
+    </select>
+    <button type="button" onclick="filterDoctors()">Filter</button>
+    <div id="filterDoctors"></div><br>
+
+    <h1>View all prescriptions</h1>
+
+    <button type="button" onclick="viewPrescriptions()">MyPrescriptions</button>
+    <div id="viewPrescriptions"></div>
+    <br>
+    <h1>Filter Prescriptions by date/status</h1>
+    <input type="date" name="" id="startDatePres">
+    <input type="date" name="" id="endDatePres">
+    <input type="text" name="docName" id="docName"placeholder="doc name">
+    <select name="" id="statusPres">
+        <option value="filled">filled</option>
+        <option value="not filled">not filled</option>
+       
+        <option value=""></option>
+    </select>
+    <button type="button" onclick="filterPres()">Filter</button>
+    <div id="filterPres"></div><br><br>
+    <h1>Family Members</h1>
+
+    <form action="/patient/addFamilyMem" method="post">
+        <input name="name" id="name" placeholder="name">
+        <input name="age" id="age" placeholder="age">
+        <select name="gender" id="gender">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+
+        </select>
+        <input name="nId" id="nId" placeholder="national Id">
+
+        <select name="relation" id="relation">
+            <option value="wife">Wife</option>
+            <option value="husband">Husband</option>
+            <option value="child">Child</option>
+
+        </select>
+                <button type="submit">Add</button>
+    </form>
+<br>
+    <button type="button" onclick="viewRegFamMem()">MyFamilyMembers</button>
+    <div id="MyFamilyMembers"></div>
+
+    <h1>Filter Appointment by date/status</h1>
+    <input type="date" name="" id="startDate">
+    <input type="date" name="" id="endDate">
+    <select name="" id="status">
+        <option value="upcoming">upcoming</option>
+        <option value="completed">completed</option>
+        <option value="cancelled">cancelled</option>
+        <option value="rescheduled">rescheduled</option>
+        <option value=""></option>
+    </select>
+    <button type="button" onclick="filterDateAppointments()">Filter</button>
+    <div id="filterDateAppointments"></div>
+
+    <h1>Search For Doctor by Name and Specialty</h1>
+    <input type="text" name="" id="nameSearch">
+    <input type="text" name="" id="specialtySearch">
+    <button type="button" onclick="showDrs()">Search</button>
+    <div id="drNamesAndSpecialty"></div>
+
+   
+
+
+    
+
+
+    <script>
+async function filterPres() {
+            let myBody = {
+                startDate: document.getElementById('startDatePres').value,
+                endDate: document.getElementById('endDatePres').value,
+                status: document.getElementById('statusPres').value,
+                Name:document.getElementById('docName').value
+            }
+
+
+            let response = await fetch(`http://localhost:8000/Patient/filterPrescriptions`, {
+                method: 'POST', // Use the appropriate HTTP method (e.g., POST, PUT, or PATCH)
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(myBody), // Convert the data to a JSON string and include it as the body
+            });
+           
+            let res = await response.json();
+            if (!res.success)
+                    return alert(res.error);
+            res=    res.final;
+            let cartoona = ''
+            for (let i = 0; i < res.length; i++) {
+                cartoona += `
+                    <ul>
+                <li>Name: ${res[i].Name}
+                </li>
+                <li><strong>Date:</strong>
+                    ${res[i].Date}
+                </li>
+                <li><strong>Status:</strong>
+                    ${res[i].status}
+                </li>
+                
+                <li>
+                 <p><a href="data:'application/pdf';base64,
+                    ${res[i].prescriptionDoc} "download="Prescription.pdf">Download Prescription Document</a></p>
+                </li>
+        </ul>`
+            }
+
+            var element = document.getElementById('filterPres')
+            element.innerHTML = cartoona
+        }
+async function filterDateAppointments() {
+            let myBody = {
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                status: document.getElementById('status').value
+            }
+
+
+            let response = await fetch(`http://localhost:8000/Patient/getAppointment`, {
+                method: 'POST', // Use the appropriate HTTP method (e.g., POST, PUT, or PATCH)
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(myBody), // Convert the data to a JSON string and include it as the body
+            });
+            
+            let res = await response.json();
+
+
+            let cartoona = ''
+            for (let i = 0; i < res.length; i++) {
+                cartoona += `
+                    <ul>
+                <li>Name: ${res[i].Name}
+                </li>
+                <li><strong>Date:</strong>
+                    ${res[i].Date}
+                </li>
+                <li><strong>Status:</strong>
+                    ${res[i].Status}
+                </li>
+        </ul>`
+            }
+
+            var element = document.getElementById('filterDateAppointments')
+            element.innerHTML = cartoona
+        }
+
+        async function filterDoctors() {
+            time=document.getElementById('timeFilter').value
+            let[hours, mins] = time.split(":");
+            
+            let myBody = {
+                date: document.getElementById('dateFilter').value+"T"+hours+":"+mins,
+                Speciality: document.getElementById('specialityFilter').value
+                
+            }
+
+            let response = await fetch(`http://localhost:8000/Patient/filterDoctors`, {
+                method: 'POST', // Use the appropriate HTTP method (e.g., POST, PUT, or PATCH)
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(myBody), // Convert the data to a JSON string and include it as the body
+            });
+            
+            let res = await response.json();
+            console.log(res);
+            // var list = res.final;
+            // console.log(list);
+
+
+
+            let cartoona = ''
+            for (let i in res) {
+                cartoona += `
+                <ul>
+                        <li><strong>Doctor's Name</strong>
+                    ${res[i].Name}
+                </li>
+                <td><button onclick="showDoctor2('${res[i]._id}')">Select Doctor</button></td>    
+        </ul>`
+            }
+
+            var element = document.getElementById('filterDoctors')
+            element.innerHTML = cartoona
+        }
+
+
+        async function showDrs() {
+            try {
+                let myBody = {
+                    Name : document.getElementById('nameSearch').value ,      
+                    Speciality: document.getElementById('specialtySearch').value
+            }
+
+
+            let response = await fetch(`http://localhost:8000/patient/getDoctors`, {
+                method: 'POST', // Use the appropriate HTTP method (e.g., POST, PUT, or PATCH)
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(myBody), // Convert the data to a JSON string and include it as the body
+            });
+
+                
+                // Remove the colon from the URL placeholder
+                var res = await response.json();
+
+                if (!res.success)
+                    return alert(res.message);
+
+                var list = res.Doctors
+                console.log(list)
+                var cartoona = ''
+                for (let i = 0; i < list.length; i++) {
+                    console.log(list[i].Name)
+
+                    cartoona += `
+                    <ul>
+                        <li><strong>Doctor's Name</strong>
+                    ${list[i].Name}
+                </li>
+                <td><button onclick="showDoctor1('${list[i]._id}')">Select Doctor</button></td>    
+        </ul>`
+                }
+
+                var element = document.getElementById('drNamesAndSpecialty')
+                element.innerHTML = cartoona
+            }
+            catch (error) {
+                console.error('Error fetching Doctor data:', error);
+            }
+        }
+
+        async function getDoctorNames() {
+            try {
+                var response = await fetch(`http://localhost:8000/patient/getDoctorsInfo`);
+
+
+                var res = await response.json();
+                console.log(res)
+
+                if (!res.success)
+                    return alert(res.message);
+
+                var list = res.final
+                console.log(list)
+                var cartoona = ''
+                for (let i = 0; i < list.length; i++) {
+                    console.log(list[i].Name)
+
+                    cartoona += `
+                    <ul>
+                        <li><strong>Doctor's Name</strong>
+                    ${list[i].Name}
+                </li>
+                <li><strong>Doctor's speciality</strong>
+                    ${list[i].speciality}
+                </li><li><strong>Doctor's session price</strong>
+                    ${list[i].sessionPrice}
+                </li>
+                <td><button onclick="showDoctor('${list[i].id}')">Select Doctor</button></td>    
+        </ul>`
+                }
+
+                document.getElementById('ViewAllDoctors').innerHTML = cartoona
+            }
+            catch (error) {
+                console.error('Error fetching doctors data:', error);
+            }
+        }
+
+        async function showDoctor(id) {
+            try {
+                console.log("pp");
+                console.log(id);
+                // Remove the colon from the URL placeholder
+                var response = await fetch(`http://localhost:8000/patient/selectDoctors/${id}`);
+                var res = await response.json();
+
+                var list = res.Dr
+                console.log(list)
+
+
+
+                if (!res.success)
+                    return alert(res.message);
+
+                var element = document.getElementById('ViewAllDoctors')
+
+                var cartoona = `Name: ${list[0].Name} <br>Email:  ${list[0].Email}<br>   Date of Birth:  ${list[0].DateOfBirth}<br>
+                Hourly Rate: ${list[0].HourlyRate}  <br>   Affiliation:${list[0].Affiliation}   <br> Education: ${list[0].Education}<br>
+                Speciality: ${list[0].Speciality}<br>  Price:${list[0].sessionPrice}`
+
+                element.innerHTML = cartoona
+            } catch (error) {
+                console.error('Error fetching Doctor data:', error);
+            }
+        }
+        async function showDoctor1(id) {
+            try {
+                console.log("pp");
+                console.log(id);
+                // Remove the colon from the URL placeholder
+                var response = await fetch(`http://localhost:8000/patient/selectDoctors/${id}`);
+                var res = await response.json();
+
+                var list = res.Dr
+                console.log(list)
+
+
+
+                if (!res.success)
+                    return alert(res.message);
+
+                var element = document.getElementById('drNamesAndSpecialty')
+                
+
+                var cartoona = `Name: ${list[0].Name} <br>Email:  ${list[0].Email}<br>   Date of Birth:  ${list[0].DateOfBirth}<br>
+                Hourly Rate: ${list[0].HourlyRate}  <br>   Affiliation:${list[0].Affiliation}   <br> Education: ${list[0].Education}<br>
+                Speciality: ${list[0].Speciality}<br>  Price:${list[0].sessionPrice}`
+
+                element.innerHTML = cartoona
+            } catch (error) {
+                console.error('Error fetching Doctor data:', error);
+            }
+        }
+
+        async function showDoctor2(id) {
+            try {
+                console.log("pp");
+                console.log(id);
+                // Remove the colon from the URL placeholder
+                var response = await fetch(`http://localhost:8000/patient/selectDoctors/${id}`);
+                var res = await response.json();
+
+                var list = res.Dr
+                console.log(list)
+
+
+
+                if (!res.success)
+                    return alert(res.message);
+
+                var element = document.getElementById('filterDoctors')
+                
+
+                var cartoona = `Name: ${list[0].Name} <br>Email:  ${list[0].Email}<br>   Date of Birth:  ${list[0].DateOfBirth}<br>
+                Hourly Rate: ${list[0].HourlyRate}  <br>   Affiliation:${list[0].Affiliation}   <br> Education: ${list[0].Education}<br>
+                Speciality: ${list[0].Speciality}<br>  Price:${list[0].sessionPrice}`
+                element.innerHTML = cartoona
+            } catch (error) {
+                console.error('Error fetching Doctor data:', error);
+            }
+        }
+
+
+async function viewRegFamMem() {
+            try {
+                var response = await fetch(`http://localhost:8000/patient/viewRegFamMem`);
+
+
+                var res = await response.json();
+
+
+                if (!res.success)
+                    return alert(res.message);
+
+                var list = res.Result
+                console.log(list)
+                var cartoona = ''
+                for (let i = 0; i < list.length; i++) {
+                    cartoona += `
+                    <ul>
+                   
+                <li><strong>Name:</strong>
+                    ${list[i].Name}
+                </li>
+                <li><strong>Age:</strong>
+                    ${list[i].Age}
+                </li>
+                <li><strong>NationalId:</strong>
+                    ${list[i].NationalId}
+                </li>
+                <li><strong>Gender:</strong>
+                    ${list[i].Gender}
+                </li>
+                <li><strong>Relation:</strong>
+                    ${list[i].Relation}
+                </li>
+                <li><strong>FamilyMemId:</strong>
+                    ${list[i].FamilyMemId}
+                </li>
+               
+                
+                                
+        </ul>`
+                }
+
+                document.getElementById('MyFamilyMembers').innerHTML = cartoona
+            }
+            catch (error) {
+                console.error('Error fetching family members data:', error);
+            }
+        }
+
+       
+       async function viewPrescriptions() {
+            try {
+                var response = await fetch(`http://localhost:8000/patient/viewPrescriptions`);
+
+
+                var res = await response.json();
+
+
+                if (!res.success)
+                    return alert(res.message);
+
+                var list = res.Result
+                console.log(list)
+                var cartoona = ''
+                for (let i = 0; i < list.length; i++) {
+                    cartoona += `
+                    <ul>
+                  
+                <li><strong>Doctor Name:</strong>
+                    ${list[i].Doctor}
+                </li>
+                <li><strong>Status:</strong>
+                    ${list[i].status}
+                </li>
+                <li><strong>Date:</strong>
+                    ${list[i].Date}
+                </li>
+                <td><button onclick="showPresDetails('${list[i].id}')">Show more</button></td>
+
+               
+                               
+        </ul>`
+                }
+
+                document.getElementById('viewPrescriptions').innerHTML = cartoona
+            }
+            catch (error) {
+                console.error('Error fetching prescriptions data:', error);
+            }
+        }
+
+       async function showPresDetails(id){
+        try {
+                var response = await fetch(`http://localhost:8000/patient/selectPrescriptions/${id}`);
+
+
+                var res = await response.json();
+                console.log(res)
+
+                if (!res.success)
+                    return alert(res.message);
+                    var list = res.final
+                console.log(list)
+                var cartoona = '<h3>Prescription Details</h3>'
+                    cartoona += `
+                    <ul>
+                  
+                <li><strong>Doctor Name:</strong>
+                    ${list.Doctor}
+                </li>
+                <li><strong>Status:</strong>
+                    ${list.status}
+                </li>
+                <li><strong>Date:</strong>
+                    ${list.Date}
+                </li>
+                <li>
+                 <p><a href="data:'application/pdf';base64,
+                    ${list.prescriptionDoc} "download="Prescription.pdf">Download Prescription Document</a></p>
+                </li>
+                               
+           
+           
+            </ul>`
+                  
+                document.getElementById('viewPrescriptions').innerHTML = cartoona
+ 
+
+        }
+        catch (error) {
+                console.error('Error fetching pres data:', error);
+            }
+
+       }
+       
+       
+
+
+       
+    </script>
+</body>
+
+</html>
